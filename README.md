@@ -1,39 +1,14 @@
-# ... exercise
+# gRPC Supplier
 
-This is the starting point for exercise on ...
+This is a gRPC application, composed of three modules:
+- [contract](contract/) - protocol buffers definition
+- [server](server/) - implementation of service
+- [client](client/) - invocation of service
 
+See the README for each module.  
+Start at contract, then go to server, and finally go to the client.
 
-## Maven instructions
-
-To print the project dependencies:
-
-```
-mvn dependency:tree
-```
-
-To compile the source code:
-
-```
-mvn compile
-```
-
-To execute the program:
-
-```
-...
-```
-
-*(complete the instructions above; and then delete this line)*
-
-
-## To configure the Maven project in Eclipse
-
-'File', 'Import...', 'Maven'-'Existing Maven Projects'
-
-'Select root directory' and 'Browse' to the project base folder.
-
-Check that the desired POM is selected and 'Finish'.
-
+The example can be extended with additional data in the messages and with security protections.
 
 ----
 
@@ -51,9 +26,6 @@ Check that the desired POM is selected and 'Finish'.
 
 *(fill-in lines above with student number, name, and email; and then delete this line)*
 
-
 ----
-
-For help, please contact:
 
 [SD Faculty](mailto:leic-sod@disciplinas.tecnico.ulisboa.pt)
