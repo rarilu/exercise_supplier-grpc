@@ -15,6 +15,12 @@ To compile and run the server:
 mvn compile exec:java
 ```
 
+To compile and run the server with debug messages:
+
+```
+mvn compile exec:java -Ddebug
+```
+
 
 ## To configure the Maven project in Eclipse
 

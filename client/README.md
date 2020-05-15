@@ -15,6 +15,12 @@ To compile and run the client:
 mvn compile exec:java
 ```
 
+To compile and run the client with debug messages:
+
+```
+mvn compile exec:java -Ddebug
+```
+
 
 ## To configure the Maven project in Eclipse
 
