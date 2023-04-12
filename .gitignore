@@ -42,3 +42,6 @@ target/
 
 # VS Code
 .vscode/
+
+# Resources
+*/src/main/resources

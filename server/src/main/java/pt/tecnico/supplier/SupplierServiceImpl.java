@@ -2,14 +2,17 @@ package pt.tecnico.supplier;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
+import com.google.protobuf.ByteString;
 import com.google.type.Money;
 
 import io.grpc.stub.StreamObserver;
 import pt.tecnico.supplier.domain.Supplier;
-import pt.tecnico.supplier.grpc.Product;
-import pt.tecnico.supplier.grpc.ProductsRequest;
-import pt.tecnico.supplier.grpc.ProductsResponse;
-import pt.tecnico.supplier.grpc.SupplierGrpc;
+import pt.tecnico.supplier.grpc.*;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.InputStream;
+import java.security.MessageDigest;
 
 public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 
@@ -49,7 +52,7 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 	}
 
 	@Override
-	public void listProducts(ProductsRequest request, StreamObserver<ProductsResponse> responseObserver) {
+	public void listProducts(ProductsRequest request, StreamObserver<SignedResponse> responseObserver) {
 		debug("listProducts called");
 
 		debug("Received request:");
@@ -75,10 +78,62 @@ public class SupplierServiceImpl extends SupplierGrpc.SupplierImplBase {
 		debug(printHexBinary(responseBinary));
 		debug(String.format("%d bytes%n", responseBinary.length));
 
-		// send single response back
-		responseObserver.onNext(response);
-		// complete call
-		responseObserver.onCompleted();
+		try {
+			MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+			messageDigest.update(responseBinary);
+			byte[] digest = messageDigest.digest();
+			debug("Digest: " + printHexBinary(digest));
+
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, readKey("secret.key"));
+			byte[] cipherDigest = cipher.doFinal(digest);
+			ByteString cipherDigestByteString = ByteString.copyFrom(cipherDigest);
+
+			Signature signature = Signature.newBuilder()
+					.setSignerId(supplier.getId())
+					.setValue(cipherDigestByteString)
+					.build();
+
+			//!! TEST SIGNATURE EFFICACY !!//
+
+			// to test: change below to true, then see if client rejects message
+			if (false) {
+				response = response.toBuilder()
+						.addProduct(Product.newBuilder()
+								.setIdentifier("THIS SHOULD FAIL")
+								.build())
+						.build();
+			}
+
+			//!! END TEST SIGNATURE EFFICACY !!//
+
+			SignedResponse signedResponse = SignedResponse.newBuilder()
+					.setResponse(response)
+					.setSignature(signature)
+					.build();
+
+			// send single response back
+			responseObserver.onNext(signedResponse);
+			// complete call
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			e.printStackTrace();
+			responseObserver.onError(e);
+		}
+	}
+
+	public static SecretKeySpec readKey(String resourcePathName) throws Exception {
+		debug("Reading key from resource " + resourcePathName + " ...");
+
+		try (InputStream fis = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePathName)) {
+			assert fis != null;
+			byte[] encoded = new byte[fis.available()];
+			debug("Read " + fis.read(encoded) + " bytes");
+
+			debug("Key: " + printHexBinary(encoded));
+
+			return new SecretKeySpec(encoded, "AES");
+		}
 	}
 
 }

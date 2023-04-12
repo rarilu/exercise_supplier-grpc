@@ -5,8 +5,14 @@ import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import pt.tecnico.supplier.grpc.ProductsRequest;
-import pt.tecnico.supplier.grpc.ProductsResponse;
+import pt.tecnico.supplier.grpc.SignedResponse;
 import pt.tecnico.supplier.grpc.SupplierGrpc;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.InputStream;
+import java.security.MessageDigest;
+import java.util.Arrays;
 
 public class SupplierClient {
 
@@ -59,7 +65,7 @@ public class SupplierClient {
 
 		// Make the call using the stub.
 		System.out.println("Remote call...");
-		ProductsResponse response = stub.listProducts(request);
+		SignedResponse response = stub.listProducts(request);
 
 		// Print response.
 		System.out.println("Received response:");
@@ -69,8 +75,38 @@ public class SupplierClient {
 		debug(printHexBinary(responseBinary));
 		debug(String.format("%d bytes%n", responseBinary.length));
 
+		MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+		messageDigest.update(response.getResponse().toByteArray());
+		byte[] digest = messageDigest.digest();
+		debug("Digest: " + printHexBinary(digest));
+
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, readKey("secret.key"));
+		byte[] decipheredDigest = cipher.doFinal(response.getSignature().getValue().toByteArray());
+		debug("Deciphered digest: " + printHexBinary(decipheredDigest));
+
+		if (Arrays.equals(digest, decipheredDigest)) {
+			System.out.println("Signature is valid! Message accepted! :)");
+		} else {
+			System.out.println("Signature is invalid! Message rejected! :(");
+		}
+
 		// A Channel should be shutdown before stopping the process.
 		channel.shutdownNow();
+	}
+
+	public static SecretKeySpec readKey(String resourcePathName) throws Exception {
+		debug("Reading key from resource " + resourcePathName + " ...");
+
+		try (InputStream fis = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePathName)) {
+			assert fis != null;
+			byte[] encoded = new byte[fis.available()];
+			debug("Read " + fis.read(encoded) + " bytes");
+
+			debug("Key: " + printHexBinary(encoded));
+
+			return new SecretKeySpec(encoded, "AES");
+		}
 	}
 
 }

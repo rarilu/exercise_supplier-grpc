@@ -14,17 +14,13 @@ The example can be extended with additional data in the messages and with securi
 
 ## Authors
 
-**Group ...**
+**Group A02**
 
-*(fill-in line above with group identifier e.g. A07 or T22; and then delete this line)*
+Rafael Oliveira [ist199311](mailto:rafael.serra.oliveira@tecnico.ulisboa.pt)
 
-... [...](mailto:...@tecnico.ulisboa.pt)
+Ricardo Antunes [ist199316](mailto:ricardo.g.antunes@tecnico.ulisboa.pt)
 
-... [...](mailto:...@tecnico.ulisboa.pt)
-
-... [...](mailto:...@tecnico.ulisboa.pt)
-
-*(fill-in lines above with student number, name, and email; and then delete this line)*
+Luís Fonseca [ist199266](mailto:luis.h.fonseca@tecnico.ulisboa.pt)
 
 ----
 
